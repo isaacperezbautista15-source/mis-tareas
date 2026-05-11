@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mis Tareas">
+<meta name="theme-color" content="#0f0f0f">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Mis Tareas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: #2e2e2e;
+    --text: #f0ede8;
+    --muted: #6b6b6b;
+    --hint: #3a3a3a;
+    --hoy: #e05a3a;
+    --hoy-bg: #1f1410;
+    --hoy-border: #3d2015;
+    --pronto: #c99a2e;
+    --pronto-bg: #1a1609;
+    --pronto-border: #3a2f0e;
+    --cuando: #3aaa7a;
+    --cuando-bg: #0d1a14;
+    --cuando-border: #153324;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 2rem;
+    overscroll-behavior: none;
+  }
+
+  .header {
+    padding: 3rem 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .app-name {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .date-chip {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 10px;
+    margin-top: 2px;
+  }
+
+  .counters {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .cnt {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cnt::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .cnt.hoy::before { background: var(--hoy); }
+  .cnt.pronto::before { background: var(--pronto); }
+  .cnt.cuando::before { background: var(--cuando); }
+  .cnt:active { opacity: 0.7; transform: scale(0.97); }
+
+  .cnt-num {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cnt.hoy .cnt-num { color: var(--hoy); }
+  .cnt.pronto .cnt-num { color: var(--pronto); }
+  .cnt.cuando .cnt-num { color: var(--cuando); }
+
+  .cnt-label {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .sections { padding: 1rem 1.25rem 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .section {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .section.hoy { border-color: var(--hoy-border); background: var(--hoy-bg); }
+  .section.pronto { border-color: var(--pronto-border); background: var(--pronto-bg); }
+  .section.cuando { border-color: var(--cuando-border); background: var(--cuando-bg); }
+
+  .sec-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .sec-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .hoy .sec-dot { background: var(--hoy); box-shadow: 0 0 6px var(--hoy); }
+  .pronto .sec-dot { background: var(--pronto); box-shadow: 0 0 6px var(--pronto); }
+  .cuando .sec-dot { background: var(--cuando); box-shadow: 0 0 6px var(--cuando); }
+
+  .sec-title { font-size: 15px; font-weight: 500; flex: 1; color: var(--text); }
+
+  .sec-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 3px 9px;
+  }
+
+  .sec-arrow {
+    font-size: 12px;
+    color: var(--muted);
+    transition: transform 0.2s;
+    width: 16px;
+    text-align: center;
+  }
+
+  .sec-arrow.open { transform: rotate(180deg); }
+
+  .sec-body {
+    display: none;
+    padding: 0 12px 12px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .sec-body.open { display: block; }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 0 8px;
+  }
+
+  .add-row input {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .add-row input::placeholder { color: var(--muted); }
+  .add-row input:focus { border-color: rgba(255,255,255,0.25); }
+
+  .add-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    width: 42px; height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 20px;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .add-btn:active { background: rgba(255,255,255,0.15); }
+
+  .tasks { display: flex; flex-direction: column; gap: 5px; }
+
+  .task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.04);
+    animation: slideIn 0.18s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.18s;
+  }
+
+  .task-check:active { transform: scale(0.85); }
+  .hoy .task-check.done { background: var(--hoy); border-color: var(--hoy); }
+  .pronto .task-check.done { background: var(--pronto); border-color: var(--pronto); }
+  .cuando .task-check.done { background: var(--cuando); border-color: var(--cuando); }
+
+  .check-icon { display: none; width: 10px; height: 10px; }
+  .task-check.done .check-icon { display: block; }
+
+  .task-text {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+    word-break: break-word;
+    transition: opacity 0.15s;
+  }
+
+  .task-text.done {
+    opacity: 0.35;
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,255,255,0.2);
+  }
+
+  .task-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+  .move-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 6px;
+    line-height: 1;
+    transition: background 0.12s;
+    color: var(--muted);
+  }
+
+  .move-btn:active { background: rgba(255,255,255,0.1); }
+
+  .del-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    padding: 2px 4px;
+    border-radius: 6px;
+    transition: color 0.12s;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .del-btn:active { color: #e24b4a; }
+
+  .empty {
+    font-size: 12px;
+    color: var(--hint);
+    text-align: center;
+    padding: 12px 0 4px;
+    font-style: italic;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    padding: 10px 18px;
+    border-radius: 30px;
+    transition: transform 0.25s ease;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="app-name">Mis tareas</div>
+    <div class="date-chip" id="fecha"></div>
+  </div>
+  <div class="counters">
+    <div class="cnt hoy" onclick="goTo('hoy')">
+      <div class="cnt-num" id="cnt-hoy">0</div>
+      <div class="cnt-label">Hoy</div>
+    </div>
+    <div class="cnt pronto" onclick="goTo('pronto')">
+      <div class="cnt-num" id="cnt-pronto">0</div>
+      <div class="cnt-label">Pronto</div>
+    </div>
+    <div class="cnt cuando" onclick="goTo('cuando')">
+      <div class="cnt-num" id="cnt-cuando">0</div>
+      <div class="cnt-label">Después</div>
+    </div>
+  </div>
+</div>
+
+<div class="sections">
+  <div class="section hoy" id="sec-hoy">
+    <div class="sec-header" onclick="toggle('hoy')">
+      <div class="sec-dot"></div>
+      <span class="sec-title">Hoy / Esta semana</span>
+      <span class="sec-badge" id="badge-hoy">0</span>
+      <span class="sec-arrow open" id="arr-hoy">▼</span>
+    </div>
+    <div class="sec-body open" id="body-hoy">
+      <div class="add-row">
+        <input type="text" id="inp-hoy" placeholder="Tarea urgente..." maxlength="120" onkeydown="if(event.key==='Enter')add('hoy')">
+        <button class="add-btn" onclick="add('hoy')">+</button>
+      </div>
+      <div class="tasks" id="list-hoy"></div>
+    </div>
+  </div>
+
+  <div class="section pronto" id="sec-pronto">
+    <div class="sec-header" onclick="toggle('pronto')">
+      <div class="sec-dot"></div>
+      <span class="sec-title">Pronto</span>
+      <span class="sec-badge" id="badge-pronto">0</span>
+      <span class="sec-arrow open" id="arr-pronto">▼</span>
+    </div>
+    <div class="sec-body open" id="body-pronto">
+      <div class="add-row">
+        <input type="text" id="inp-pronto" placeholder="Importante pero sin urgencia..." maxlength="120" onkeydown="if(event.key==='Enter')add('pronto')">
+        <button class="add-btn" onclick="add('pronto')">+</button>
+      </div>
+      <div class="tasks" id="list-pronto"></div>
+    </div>
+  </div>
+
+  <div class="section cuando" id="sec-cuando">
+    <div class="sec-header" onclick="toggle('cuando')">
+      <div class="sec-dot"></div>
+      <span class="sec-title">Cuando pueda</span>
+      <span class="sec-badge" id="badge-cuando">0</span>
+      <span class="sec-arrow open" id="arr-cuando">▼</span>
+    </div>
+    <div class="sec-body open" id="body-cuando">
+      <div class="add-row">
+        <input type="text" id="inp-cuando" placeholder="Para más adelante..." maxlength="120" onkeydown="if(event.key==='Enter')add('cuando')">
+        <button class="add-btn" onclick="add('cuando')">+</button>
+      </div>
+      <div class="tasks" id="list-cuando"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LISTS = ['hoy','pronto','cuando'];
+const LABELS = { hoy:'Hoy', pronto:'Pronto', cuando:'Cuando pueda' };
+const EMOJIS = { hoy:'🔴', pronto:'🟡', cuando:'🟢' };
+let data = { hoy:[], pronto:[], cuando:[] };
+
+function load() {
+  try { const s = localStorage.getItem('tareas_pwa_v1'); if (s) data = JSON.parse(s); } catch(e) {}
+}
+function save() {
+  try { localStorage.setItem('tareas_pwa_v1', JSON.stringify(data)); } catch(e) {}
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function add(list) {
+  const inp = document.getElementById('inp-' + list);
+  const txt = inp.value.trim();
+  if (!txt) { inp.focus(); return; }
+  data[list].unshift({ id: uid(), text: txt, done: false });
+  inp.value = ''; save(); render(); inp.focus();
+}
+
+function toggleDone(list, id) {
+  const t = data[list].find(t => t.id === id);
+  if (t) { t.done = !t.done; save(); render(); }
+}
+
+function del(list, id) {
+  data[list] = data[list].filter(t => t.id !== id);
+  save(); render();
+}
+
+function move(from, id, to) {
+  const idx = data[from].findIndex(t => t.id === id);
+  if (idx === -1) return;
+  const task = data[from].splice(idx, 1)[0];
+  task.done = false;
+  data[to].unshift(task);
+  save(); render();
+  showToast('Movida a ' + LABELS[to]);
+}
+
+function toggle(list) {
+  document.getElementById('body-' + list).classList.toggle('open');
+  document.getElementById('arr-' + list).classList.toggle('open');
+}
+
+function goTo(list) {
+  document.getElementById('sec-' + list).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const body = document.getElementById('body-' + list);
+  if (!body.classList.contains('open')) toggle(list);
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function render() {
+  LISTS.forEach(list => {
+    const tasks = data[list];
+    const pending = tasks.filter(t => !t.done).length;
+    document.getElementById('cnt-' + list).textContent = pending;
+    document.getElementById('badge-' + list).textContent = tasks.length;
+    const container = document.getElementById('list-' + list);
+    if (!tasks.length) { container.innerHTML = '<div class="empty">Sin tareas aquí</div>'; return; }
+    const others = LISTS.filter(l => l !== list);
+    container.innerHTML = tasks.map(t => `
+      <div class="task">
+        <div class="task-check ${t.done?'done':''}" onclick="toggleDone('${list}','${t.id}')">
+          <svg class="check-icon" viewBox="0 0 10 10" fill="none">
+            <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="task-text ${t.done?'done':''}">${esc(t.text)}</span>
+        <div class="task-actions">
+          ${others.map(o=>`<button class="move-btn" onclick="move('${list}','${t.id}','${o}')">${EMOJIS[o]}</button>`).join('')}
+          <button class="del-btn" onclick="del('${list}','${t.id}')">×</button>
+        </div>
+      </div>`).join('');
+  });
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+const D = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const M = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const now = new Date();
+document.getElementById('fecha').textContent = D[now.getDay()] + ' ' + now.getDate() + ' ' + M[now.getMonth()];
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(e => console.log('SW error:', e));
+}
+
+load(); render();
+</script>
+</body>
+</html>
